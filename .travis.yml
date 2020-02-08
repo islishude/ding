@@ -1,0 +1,9 @@
+language: "go"
+go:
+  - "1.13"
+git:
+  depth: 1
+env:
+  - GO111MODULE=on
+script:
+  - go test -v -race ./...
