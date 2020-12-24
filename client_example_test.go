@@ -1,11 +1,8 @@
 package ding
 
-import (
-	"net/http"
-	"testing"
-)
+import "net/http"
 
-func ExampleMulti(t *testing.T) {
+func ExampleMulti() {
 	// 使用默认 HTTP 客户端
 	_ = Multi([]AccessToken{
 		{Token: "64dccf44fac0643d34e461c36175ca109b1a477b208b595268501cc5aef48fe8", Key: "SECd3cf4b5914673e765148426ab2904f795603d6734b458ddb6a53ba5652fb3b27"},
