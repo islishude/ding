@@ -19,10 +19,14 @@ func defaultNow() string {
 	return strconv.FormatInt(timestamp, 10)
 }
 
+var defaultClient = &http.Client{Timeout: time.Second * 5}
+
+const webhook = "https://oapi.dingtalk.com/robot/send"
+
 // New 创建新的实例，hmkey 为 HMAC key 如没有可以不填
 func New(client *http.Client, token string, hmkey ...string) Ding {
 	if client == nil {
-		client = &http.Client{Timeout: time.Second * 5}
+		client = defaultClient
 	}
 
 	var secret string
@@ -31,7 +35,7 @@ func New(client *http.Client, token string, hmkey ...string) Ding {
 	}
 
 	return &clientimpl{
-		api:    "https://oapi.dingtalk.com/robot/send",
+		api:    webhook,
 		tokens: []AccessToken{{Token: token, Key: secret}},
 		client: client,
 		now:    defaultNow,
@@ -39,13 +43,18 @@ func New(client *http.Client, token string, hmkey ...string) Ding {
 }
 
 // Multi 创建包含访问令牌的实例，每次请求轮换使用下一个访问令牌，防止限流造成的发送失败
-func Multi(client *http.Client, tokens []AccessToken) Ding {
-	return &clientimpl{
-		api:    "https://oapi.dingtalk.com/robot/send",
+func Multi(tokens []AccessToken, client ...*http.Client) Ding {
+	impl := &clientimpl{
+		api:    webhook,
 		tokens: tokens,
-		client: client,
 		now:    defaultNow,
 	}
+	if len(client) > 0 && client[0] != nil {
+		impl.client = client[0]
+	} else {
+		impl.client = defaultClient
+	}
+	return impl
 }
 
 type clientimpl struct {
