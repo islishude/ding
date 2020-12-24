@@ -1,4 +1,4 @@
 Ding Robot SDK
 
-[![GoDoc](https://godoc.org/github.com/islishude/ding?status.svg)](https://godoc.org/github.com/islishude/ding)
-[![Build Status](https://travis-ci.org/islishude/ding.svg?branch=master)](https://travis-ci.org/islishude/ding)
+[![Go Reference](https://pkg.go.dev/badge/github.com/islishude/ding.svg)](https://pkg.go.dev/github.com/islishude/ding)
+[![Test](https://github.com/islishude/ding/workflows/test/badge.svg?branch=master)]()
