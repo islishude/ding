@@ -6,23 +6,23 @@ package ding
 import (
 	"bytes"
 	"context"
-	"crypto/hmac"
-	"crypto/sha256"
-	"encoding/base64"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
-	"net/url"
 	"strconv"
+	"sync"
 	"time"
 )
 
+func defaultNow() string {
+	timestamp := time.Now().UnixNano() / 1e6
+	return strconv.FormatInt(timestamp, 10)
+}
+
 // New 创建新的实例，hmkey 为 HMAC key 如没有可以不填
 func New(client *http.Client, token string, hmkey ...string) Ding {
-	const api = "https://oapi.dingtalk.com/robot/send?access_token="
 	if client == nil {
-		client = http.DefaultClient
+		client = &http.Client{Timeout: time.Second * 5}
 	}
 
 	var secret string
@@ -31,23 +31,32 @@ func New(client *http.Client, token string, hmkey ...string) Ding {
 	}
 
 	return &clientimpl{
-		endurl: api + token,
-		hmkey:  secret,
-		bhmkey: []byte(secret),
+		api:    "https://oapi.dingtalk.com/robot/send",
+		tokens: []AccessToken{{Token: token, Key: secret}},
 		client: client,
-		now: func() string {
-			timestamp := time.Now().UnixNano() / 1e6
-			return strconv.FormatInt(timestamp, 10)
-		},
+		now:    defaultNow,
+	}
+}
+
+// Multi 创建包含访问令牌的实例，每次请求轮换使用下一个访问令牌，防止限流造成的发送失败
+func Multi(client *http.Client, tokens []AccessToken) Ding {
+	return &clientimpl{
+		api:    "https://oapi.dingtalk.com/robot/send",
+		tokens: tokens,
+		client: client,
+		now:    defaultNow,
 	}
 }
 
 type clientimpl struct {
-	endurl string
-	hmkey  string
-	bhmkey []byte
 	client *http.Client
 	now    func() string // 获取当前时间(毫秒)
+
+	api    string
+	tokens []AccessToken
+
+	index int // current access tokens index
+	mux   sync.Mutex
 }
 
 func (d *clientimpl) request(ctx context.Context, reqdata map[string]interface{}) error {
@@ -56,17 +65,27 @@ func (d *clientimpl) request(ctx context.Context, reqdata map[string]interface{}
 		return err
 	}
 
-	var endurl = d.endurl
-	if d.hmkey != "" {
-		endurl += d.getSign()
-	}
-
 	// 需要 1.13 以上版本支持
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, endurl, reqbuf)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, d.api, reqbuf)
 	if err != nil {
 		return err
 	}
 	req.Header.Set("Content-Type", "application/json")
+
+	q := req.URL.Query()
+
+	accessToken, ok := d.nextAccessToken()
+	if !ok {
+		return errors.New("no access token")
+	}
+
+	q.Set("access_token", accessToken.Token)
+	if accessToken.Key != "" {
+		timestamp := d.now()
+		q.Set("timestamp", timestamp)
+		q.Set("sign", getsign(accessToken.Key, timestamp))
+	}
+	req.URL.RawQuery = q.Encode()
 
 	resp, err := d.client.Do(req)
 	if err != nil {
@@ -90,14 +109,24 @@ func (d *clientimpl) request(ctx context.Context, reqdata map[string]interface{}
 	return nil
 }
 
-func (d *clientimpl) getSign() string {
-	var timestamp = d.now()
+// nextAccessToken 获取下一个可用的访问令牌
+func (d *clientimpl) nextAccessToken() (AccessToken, bool) {
+	if len(d.tokens) == 0 {
+		return AccessToken{}, false
+	}
 
-	hash := hmac.New(sha256.New, d.bhmkey)
-	dataToSign := []byte(fmt.Sprintf("%s\n%s", timestamp, d.hmkey))
-	_, _ = hash.Write(dataToSign)
+	if len(d.tokens) == 1 {
+		return d.tokens[0], true
+	}
 
-	// 签名后需要使用进行网址编码
-	sign := base64.StdEncoding.EncodeToString(hash.Sum(nil))
-	return fmt.Sprintf("&timestamp=%s&sign=%s", timestamp, url.QueryEscape(sign))
+	d.mux.Lock()
+	defer d.mux.Unlock()
+
+	if i := d.index; i < len(d.tokens) {
+		d.index++
+		return d.tokens[i], true
+	}
+
+	d.index = 1
+	return d.tokens[0], true
 }
