@@ -17,3 +17,9 @@ func getsign(key, timestamp string) string {
 	sign := base64.StdEncoding.EncodeToString(hasher.Sum(nil))
 	return url.QueryEscape(sign)
 }
+
+// AccessToken 访问令牌
+type AccessToken struct {
+	Token string `json:"token" yaml:"token"`                 // 令牌值
+	Key   string `json:"key,omitempty" yaml:"key,omitempty"` // 签名密钥，可为空
+}
