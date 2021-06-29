@@ -31,4 +31,7 @@ type Ding interface {
 	// title 单条信息文本
 	// messageURL 点击单条信息到跳转链接 picURL 单条信息后面图片的URL
 	SendFeedCard(ctx context.Context, links ...*FeedCard) error
+
+	// 设置是否静默模式，静默模式下，不发送任何消息
+	SetSilenceMode(silence bool) Ding
 }
