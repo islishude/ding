@@ -123,7 +123,7 @@ func Test_clientimpl_request(t *testing.T) {
 			api:    server.URL + "/silence",
 			tokens: nil,
 			client: http.DefaultClient,
-			now:    func() string { return "timetamp" },
+			now:    func() string { return "1576759748808" },
 		}
 		client.SetSilenceMode(true)
 		if err := client.request(context.TODO(), nil); err != nil {
