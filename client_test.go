@@ -159,8 +159,8 @@ func Test_New(t *testing.T) {
 		t.Fatal("webhook is not same")
 	}
 
-	if dingbot.client != http.DefaultClient {
-		t.Fatal("http client is not http.DefaultClient")
+	if dingbot.client != defaultHttpClient {
+		t.Fatal("http client is not default http client")
 	}
 }
 
