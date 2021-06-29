@@ -1,5 +1,5 @@
 // Package ding 钉钉机器人 API 实现
-// https://ding-doc.dingtalk.com/doc#/serverapi2/qf2nxq
+// https://developers.dingtalk.com/document/app/custom-robot-access
 
 package ding
 
