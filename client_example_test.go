@@ -1,7 +1,5 @@
 package ding
 
-import "net/http"
-
 func ExampleMulti() {
 	// 使用默认 HTTP 客户端
 	_ = Multi([]AccessToken{
@@ -17,5 +15,5 @@ func ExampleMulti() {
 		{Token: "73b868bcdc90e9bf534430cf16503a231299add717c5a02f7a530b49757ec898", Key: "SECb89680050aeb698c538322cf11364565ef4553d916d960cc15b0e392db5e2f31"},
 		{Token: "fa53578288687f2ecdb6a10d35e095280343660530bf16a8cfeedca966416c31", Key: "SECa2588f4e5ce18f1c715a7f9390a2a6d8a9f6f36c6311e5b1165ac81cfb918fdf"},
 		{Token: "c97fc1833897b44a6cda0b4467ea35f6d7b7769462d67c96faef1e6f5ccc078a", Key: "SECa081e0a911f97ff50fbce652a99944215c5db2d95867e65016e43561d74ff188"},
-	}, http.DefaultClient)
+	})
 }

@@ -133,26 +133,34 @@ func Test_clientimpl_request(t *testing.T) {
 }
 
 func Test_New(t *testing.T) {
-	var client = New(nil, "token", "hmkey").(*clientimpl)
+	dingbot := New("token", "hmkey").(*clientimpl)
 
-	if len(client.tokens) != 1 {
+	if len(dingbot.tokens) != 1 {
 		t.Fatal("tokens length should be 1")
 	}
 
-	if client.now == nil {
+	if dingbot.now == nil {
 		t.Fatal("now is nil")
 	}
 
-	if client.now() == "" {
+	if dingbot.now() == "" {
 		t.Fatal("now() isn't correct")
 	}
 
-	accessToken := client.tokens[0]
+	accessToken := dingbot.tokens[0]
 	if accessToken.Token != "token" {
 		t.Fatal("endurl isn't correct")
 	}
 	if accessToken.Key != "hmkey" {
 		t.Fatal("hmkey isn't correct")
+	}
+
+	if dingbot.api != webhook {
+		t.Fatal("webhook is not same")
+	}
+
+	if dingbot.client != http.DefaultClient {
+		t.Fatal("http client is not http.DefaultClient")
 	}
 }
 
