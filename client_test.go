@@ -47,6 +47,10 @@ func Test_clientimpl_request(t *testing.T) {
 		_, _ = w.Write([]byte("invalid json"))
 	})
 
+	handler.HandleFunc("/silence", func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = w.Write([]byte("should silence"))
+	})
+
 	server := httptest.NewServer(handler)
 
 	{
@@ -111,6 +115,19 @@ func Test_clientimpl_request(t *testing.T) {
 
 		if err := client.request(context.Background(), nil); err == nil {
 			t.Fatalf("want error %s but got error %v", "no access token error", err)
+		}
+	}
+
+	{
+		client := &clientimpl{
+			api:    server.URL + "/silence",
+			tokens: nil,
+			client: http.DefaultClient,
+			now:    func() string { return "1576759748808" },
+		}
+		client.SetSilenceMode(true)
+		if err := client.request(context.TODO(), nil); err != nil {
+			t.Fatalf("should silence mode")
 		}
 	}
 }

@@ -66,9 +66,15 @@ type clientimpl struct {
 
 	index int // current access tokens index
 	mux   sync.Mutex
+
+	silence bool
 }
 
 func (d *clientimpl) request(ctx context.Context, reqdata map[string]interface{}) error {
+	if d.silence {
+		return nil
+	}
+
 	var reqbuf = bytes.NewBuffer(nil)
 	if err := json.NewEncoder(reqbuf).Encode(reqdata); err != nil {
 		return err
@@ -138,4 +144,10 @@ func (d *clientimpl) nextAccessToken() (AccessToken, bool) {
 
 	d.index = 1
 	return d.tokens[0], true
+}
+
+// SetSilenceMode 设置是否静默模式，静默模式下，不发送任何消息
+func (d *clientimpl) SetSilenceMode(silence bool) Ding {
+	d.silence = silence
+	return d
 }
