@@ -125,7 +125,10 @@ func Test_clientimpl_request(t *testing.T) {
 			client: http.DefaultClient,
 			now:    func() string { return "1576759748808" },
 		}
-		client.SetSilenceMode(true)
+		SetSilenceMode(true)
+		if s := GetSilenceMode(); !s {
+			t.Fatalf("should be silence mode")
+		}
 		if err := client.request(context.TODO(), nil); err != nil {
 			t.Fatalf("should silence mode")
 		}
